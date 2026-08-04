@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Discord Badge Bot"
+description = "A Discord badge encyclopedia and bot dashboard. Shows all Discord badges with unlock guides, rarity info, and copy-paste browser console commands. Pairs with a Discord bot that answers badge questions via slash commands."
+version = "1.0.0"
+id = "artifacts/badge-bot"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 19642
+
+[services.development]
+run = "pnpm --filter @workspace/badge-bot run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/badge-bot", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/badge-bot/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "19642"
+BASE_PATH = "/"

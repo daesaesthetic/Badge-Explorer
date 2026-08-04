@@ -1,36 +1,48 @@
-# [Project name]
+# Discord Badge Bot
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+A full-stack Discord badge encyclopedia and bot. Users can browse every Discord badge, read minimal-effort unlock guides, and grab browser console commands — both on the web dashboard and directly inside Discord via slash commands.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- `pnpm --filter @workspace/badge-bot run dev` — run the web dashboard (port from $PORT)
+- `pnpm --filter @workspace/api-server run dev` — run the API server + Discord bot (port 8080)
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
 
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
 - API: Express 5
-- DB: PostgreSQL + Drizzle ORM
+- DB: PostgreSQL + Drizzle ORM (not used — badge data is static)
 - Validation: Zod (`zod/v4`), `drizzle-zod`
 - API codegen: Orval (from OpenAPI spec)
 - Build: esbuild (CJS bundle)
+- Discord: discord.js v14
+- Frontend: React + Vite + Tailwind CSS + TanStack Query
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/api-server/src/data/badges.ts` — all badge data (source of truth)
+- `artifacts/api-server/src/routes/badges.ts` — badge API routes
+- `artifacts/api-server/src/bot/index.ts` — Discord bot startup + slash command handler
+- `artifacts/api-server/src/bot/commands.ts` — embed builders + slash command definitions
+- `artifacts/badge-bot/src/` — React web dashboard
+- `lib/api-spec/openapi.yaml` — OpenAPI spec (source of truth for API contract)
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Badge data is static (defined in TypeScript) — no database needed for badge info
+- Discord slash commands are registered as global commands on startup
+- Console commands are sent as ephemeral messages to avoid public exposure of token-extracting snippets
+- Badge ID uses kebab-case slugs matching the data file (e.g. `hypesquad-bravery`)
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- **Web dashboard** (`/`): searchable/filterable badge grid with rarity indicators, difficulty chips, obtainable status
+- **Badge detail** (`/badge/:id`): full unlock guide, console command code block with copy button, tips
+- **Stats** (`/stats`): charts and counts by category and difficulty
+- **Discord bot**: `/badge search`, `/badge info`, `/badge guide`, `/badge console`, `/badge list`, `/badge stats`
 
 ## User preferences
 
@@ -38,7 +50,9 @@ _Populate as you build — explicit user instructions worth remembering across s
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- OpenAPI spec: do NOT use `type: integer` — Orval generates `zod.int()` which doesn't exist in Zod v3. Use `type: number` instead.
+- Discord bot registers global slash commands on every startup (safe — it's idempotent, but takes ~1hr to propagate for new registrations)
+- Console commands are intentionally sent as ephemeral (only visible to the requesting user) for safety
 
 ## Pointers
 

@@ -3,13 +3,15 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Discord Badge Bot API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: badges
+    description: Discord badge operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,101 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /badges:
+    get:
+      operationId: listBadges
+      tags: [badges]
+      summary: List all badges
+      description: Returns all Discord badges, optionally filtered by search query, category, or obtainable status
+      parameters:
+        - name: q
+          in: query
+          schema:
+            type: string
+          description: Search query (name or description)
+        - name: category
+          in: query
+          schema:
+            type: string
+          description: Filter by category
+        - name: obtainable
+          in: query
+          schema:
+            type: string
+            enum: ["true", "false"]
+          description: Filter by whether the badge is currently obtainable
+        - name: difficulty
+          in: query
+          schema:
+            type: string
+          description: Filter by difficulty
+      responses:
+        "200":
+          description: List of badges
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Badge"
+
+  /badges/stats:
+    get:
+      operationId: getBadgeStats
+      tags: [badges]
+      summary: Get badge stats
+      description: Returns summary statistics about all badges
+      responses:
+        "200":
+          description: Badge statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BadgeStats"
+
+  /badges/categories:
+    get:
+      operationId: listBadgeCategories
+      tags: [badges]
+      summary: List badge categories
+      description: Returns all distinct badge categories
+      responses:
+        "200":
+          description: List of categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BadgeCategory"
+
+  /badges/{id}:
+    get:
+      operationId: getBadge
+      tags: [badges]
+      summary: Get badge by ID
+      description: Returns full details for a single badge including unlock guide and console command
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Badge detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Badge"
+        "404":
+          description: Badge not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +131,106 @@ components:
       required:
         - status
 
+    BadgeGuideStep:
+      type: object
+      required: [step, description]
+      properties:
+        step:
+          type: number
+        description:
+          type: string
+        url:
+          type: ["string", "null"]
+
+    Badge:
+      type: object
+      required:
+        - id
+        - name
+        - description
+        - category
+        - rarity
+        - obtainable
+        - difficulty
+        - color
+        - guide
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+          description: "One of: hypesquad, developer, staff, nitro, booster, special, legacy"
+        rarity:
+          type: string
+          description: "One of: common, uncommon, rare, very_rare, legendary, legacy"
+        obtainable:
+          type: boolean
+          description: Whether the badge is still obtainable today
+        difficulty:
+          type: string
+          description: "One of: instant, easy, medium, hard, unobtainable"
+        timeEstimate:
+          type: ["string", "null"]
+          description: Rough time to unlock (e.g. '2 minutes', '~1 month')
+        color:
+          type: string
+          description: Hex color for the badge theme
+        guide:
+          type: array
+          items:
+            $ref: "#/components/schemas/BadgeGuideStep"
+        consoleCommand:
+          type: ["string", "null"]
+          description: JS snippet to paste in Discord's browser console, or null if not applicable
+        consoleCommandLabel:
+          type: ["string", "null"]
+          description: Short label for what the console command does
+        tips:
+          type: ["string", "null"]
+          description: Extra tips or caveats for unlocking
+
+    BadgeStats:
+      type: object
+      required:
+        - total
+        - obtainable
+        - legacy
+        - byCategory
+        - byDifficulty
+      properties:
+        total:
+          type: number
+        obtainable:
+          type: number
+        legacy:
+          type: number
+        byCategory:
+          type: object
+          additionalProperties:
+            type: number
+        byDifficulty:
+          type: object
+          additionalProperties:
+            type: number
+
+    BadgeCategory:
+      type: object
+      required: [id, label, count]
+      properties:
+        id:
+          type: string
+        label:
+          type: string
+        count:
+          type: number
+
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
