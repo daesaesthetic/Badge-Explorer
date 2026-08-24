@@ -12,23 +12,19 @@ import {
   buildConsoleEmbed,
   buildStatsEmbed,
   buildChecklistEmbed,
+  buildProfileEmbed,
   buildHuntPlanEmbed,
   buildRandomBadgeEmbed,
   getRarestBadges,
   SLASH_COMMANDS,
 } from "./commands";
 import { BADGES, searchBadges, getBadgeById } from "../data/badges";
-
-const ownedBadgesByUser = new Map<string, Set<string>>();
-
-function getOwnedBadges(userId: string): Set<string> {
-  let owned = ownedBadgesByUser.get(userId);
-  if (!owned) {
-    owned = new Set<string>();
-    ownedBadgesByUser.set(userId, owned);
-  }
-  return owned;
-}
+import {
+  getOwnedBadges,
+  markBadgeOwned,
+  unmarkBadgeOwned,
+  resetOwnedBadges,
+} from "./collection-store";
 
 export async function registerCommands(): Promise<void> {
   const token = process.env.DISCORD_BOT_TOKEN;
@@ -71,12 +67,31 @@ export function startBot(): void {
     if (interaction.type !== InteractionType.ApplicationCommand) return;
     if (!interaction.isChatInputCommand()) return;
 
-    const { commandName } = interaction;
-    if (commandName !== "badge") return;
-
-    const sub = interaction.options.getSubcommand();
+    let sub = "profile";
 
     try {
+      const { commandName } = interaction;
+      if (commandName === "profile") {
+        const target = interaction.options.getUser("user") ?? interaction.user;
+        const owned = await getOwnedBadges(target.id);
+        await interaction.reply({
+          embeds: [
+            buildProfileEmbed(
+              target.globalName ?? target.username,
+              target.displayAvatarURL({ extension: "png", size: 128 }),
+              owned,
+              client.user?.displayAvatarURL({ extension: "png", size: 128 }),
+            ),
+          ],
+          ephemeral: true,
+        });
+        return;
+      }
+
+      if (commandName !== "badge") return;
+
+      sub = interaction.options.getSubcommand();
+
       if (sub === "stats") {
         const embed = buildStatsEmbed();
         await interaction.reply({ embeds: [embed] });
@@ -144,8 +159,11 @@ export function startBot(): void {
       }
 
       if (sub === "checklist") {
-        const owned = [...getOwnedBadges(interaction.user.id)];
-        await interaction.reply({ embeds: [buildChecklistEmbed(owned)], ephemeral: true });
+        const owned = await getOwnedBadges(interaction.user.id);
+        await interaction.reply({
+          embeds: [buildChecklistEmbed(owned, client.user?.displayAvatarURL({ extension: "png", size: 128 }))],
+          ephemeral: true,
+        });
         return;
       }
 
@@ -157,15 +175,14 @@ export function startBot(): void {
           return;
         }
 
-        const owned = getOwnedBadges(interaction.user.id);
         if (sub === "own") {
-          owned.add(id);
+          await markBadgeOwned(interaction.user.id, id);
           await interaction.reply({
             content: `Marked **${badge.name}** as obtained. Use \`/badge checklist\` to see your progress.`,
             ephemeral: true,
           });
         } else {
-          owned.delete(id);
+          await unmarkBadgeOwned(interaction.user.id, id);
           await interaction.reply({
             content: `Removed **${badge.name}** from your checklist.`,
             ephemeral: true,
@@ -175,7 +192,7 @@ export function startBot(): void {
       }
 
       if (sub === "reset") {
-        ownedBadgesByUser.delete(interaction.user.id);
+        await resetOwnedBadges(interaction.user.id);
         await interaction.reply({
           content: "Your private badge checklist has been cleared.",
           ephemeral: true,

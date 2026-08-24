@@ -38,6 +38,10 @@ const CATEGORY_LABEL: Record<string, string> = {
   legacy: "Legacy",
 };
 
+const BRAND_BLUE = 0x4f6df5;
+const BRAND_GOLD = 0xf2c233;
+const BRAND_NAVY = 0x1b2559;
+
 function getAvailability(badge: Badge) {
   return badge.availability ?? (badge.obtainable ? "available" : "retired");
 }
@@ -99,11 +103,12 @@ export function buildBadgeEmbed(badgeId: string) {
   }
 
   return {
-    title: badge.name,
+    author: { name: "👑 Badge Bot · Royal Archive" },
+    title: `◆ ${badge.name}`,
     description: badge.description,
     color: RARITY_COLORS[badge.rarity] ?? 0x5865f2,
     fields,
-    footer: { text: `Badge ID: ${badge.id} | Discord Badge Bot` },
+    footer: { text: `Badge Bot · Badge ID: ${badge.id}` },
   };
 }
 
@@ -134,9 +139,10 @@ export function buildBadgeListEmbed(
   if (current.length) chunks.push(current);
 
   return {
+    author: { name: "👑 Badge Bot · Badge Reference" },
     title,
     description: (description ? description + "\n\n" : "") + (chunks[0]?.join("\n") ?? "No badges found."),
-    color: 0x5865f2,
+    color: BRAND_NAVY,
     footer: {
       text: `${badges.length} badge${badges.length !== 1 ? "s" : ""} | ✅ obtainable  ⚠️ limited  🚫 retired  🔒 restricted`,
     },
@@ -154,12 +160,13 @@ export function buildConsoleEmbed(badgeId: string) {
     : badge.consoleCommand;
 
   return {
-    title: `Console Command: ${badge.name}`,
+    author: { name: "👑 Badge Bot · Verified Guidance" },
+    title: `◆ Console Command: ${badge.name}`,
     description:
       `> **Warning:** Only run this in Discord's **official web client** browser Developer Console (F12). Never run scripts from untrusted sources. This command uses your Discord auth token.\n\n` +
       `\`\`\`javascript\n${cmdText}\n\`\`\``,
-    color: 0x23a55a,
-    footer: { text: "Press F12 in Discord Web > Console tab > paste and press Enter" },
+    color: BRAND_GOLD,
+    footer: { text: "Badge Bot · Only use the official Discord web client on your own account" },
   };
 }
 
@@ -185,8 +192,9 @@ export function buildStatsEmbed() {
     .join("\n");
 
   return {
-    title: "Discord Badge Stats",
-    color: 0x5865f2,
+    author: { name: "👑 Badge Bot · Collection Atlas" },
+    title: "◆ Discord Badge Stats",
+    color: BRAND_NAVY,
     fields: [
       { name: "Total Badges", value: `**${total}**`, inline: true },
       { name: "Obtainable Now", value: `**${obtainable}**`, inline: true },
@@ -195,7 +203,7 @@ export function buildStatsEmbed() {
       { name: "By Category", value: catLines, inline: true },
       { name: "By Difficulty", value: diffLines, inline: true },
     ],
-    footer: { text: "Discord Badge Bot" },
+    footer: { text: "Badge Bot · Current catalog snapshot" },
   };
 }
 
@@ -208,8 +216,9 @@ const RARITY_WEIGHT: Record<string, number> = {
   legacy: 1,
 };
 
-export function buildChecklistEmbed(ownedIds: string[]) {
+export function buildChecklistEmbed(ownedIds: string[], botAvatarUrl?: string) {
   const owned = new Set(ownedIds);
+  const ownedBadges = BADGES.filter((badge) => owned.has(badge.id));
   const obtainable = BADGES.filter((badge) => badge.obtainable);
   const ownedObtainable = obtainable.filter((badge) => owned.has(badge.id));
   const remaining = obtainable.filter((badge) => !owned.has(badge.id));
@@ -231,10 +240,24 @@ export function buildChecklistEmbed(ownedIds: string[]) {
     .slice(0, 8);
 
   return {
-    title: "Your Badge Checklist",
-    description: `${progressBar} **${percent}%** of obtainable badges tracked\\n\\n**${ownedObtainable.length}** obtained · **${remaining.length}** remaining · **${retired}** retired`,
-    color: 0x5865f2,
+    author: {
+      name: "Badge Bot · Collection Vault",
+      ...(botAvatarUrl ? { icon_url: botAvatarUrl } : {}),
+    },
+    title: "👑 Your Badge Checklist",
+    description: `${progressBar} **${percent}%** of obtainable badges tracked\n\n**${ownedObtainable.length}** obtained · **${remaining.length}** remaining · **${retired}** retired`,
+    color: BRAND_GOLD,
     fields: [
+      {
+        name: `Unlocked badges · ${ownedBadges.length}`,
+        value: ownedBadges.length
+          ? ownedBadges
+              .map((badge) => `${badge.obtainable ? "✅" : "◇"} **${badge.name}**`)
+              .join("\n")
+              .slice(0, 1024)
+          : "No badges marked yet. Use `/badge own` after earning one.",
+        inline: false,
+      },
       {
         name: "Next easiest targets",
         value: nextBadges.length
@@ -250,7 +273,63 @@ export function buildChecklistEmbed(ownedIds: string[]) {
         inline: false,
       },
     ],
-    footer: { text: "Only your Discord user ID is used as the in-memory checklist key" },
+    footer: {
+      text: "Badge Bot · Your collection is securely stored by Discord user ID",
+      ...(botAvatarUrl ? { icon_url: botAvatarUrl } : {}),
+    },
+  };
+}
+
+export function buildProfileEmbed(
+  displayName: string,
+  avatarUrl: string | null,
+  ownedIds: string[],
+  botAvatarUrl?: string,
+) {
+  const owned = new Set(ownedIds);
+  const ownedBadges = BADGES.filter((badge) => owned.has(badge.id));
+  const obtainable = BADGES.filter((badge) => badge.obtainable);
+  const ownedObtainable = obtainable.filter((badge) => owned.has(badge.id));
+  const badgeLines = ownedBadges.length
+    ? ownedBadges
+        .map((badge) => `${badge.obtainable ? "✅" : "◇"} **${badge.name}**`)
+        .join("\n")
+        .slice(0, 1024)
+    : "No badges unlocked yet. Use `/badge own` to start tracking this profile.";
+
+  return {
+    author: {
+      name: `${displayName}'s Badge Profile`,
+      ...(avatarUrl ? { icon_url: avatarUrl } : {}),
+    },
+    title: "👑 Badge Cabinet",
+    description: "A private snapshot of the badges this Discord profile has marked as unlocked.",
+    color: BRAND_BLUE,
+    ...(avatarUrl ? { thumbnail: { url: avatarUrl } } : {}),
+    fields: [
+      {
+        name: `Unlocked badges · ${ownedBadges.length}`,
+        value: badgeLines,
+        inline: false,
+      },
+      {
+        name: "Current collection",
+        value: `**${ownedObtainable.length} / ${obtainable.length}** currently obtainable badges tracked`,
+        inline: true,
+      },
+      {
+        name: "Profile status",
+        value: ownedBadges.length ? "Collection in progress" : "Ready to begin",
+        inline: true,
+      },
+    ],
+    footer: {
+      text: botAvatarUrl
+        ? "Badge Bot · Reference profile"
+        : "Badge Bot · Profile data is read from Discord and not stored",
+      ...(botAvatarUrl ? { icon_url: botAvatarUrl } : {}),
+    },
+    timestamp: new Date().toISOString(),
   };
 }
 
@@ -476,6 +555,18 @@ export const SLASH_COMMANDS = [
             choices: BADGES.map((b) => ({ name: b.name, value: b.id })),
           },
         ],
+      },
+    ],
+  },
+  {
+    name: "profile",
+    description: "Display a private badge profile and unlocked badges",
+    options: [
+      {
+        name: "user",
+        description: "Discord user to view (defaults to you)",
+        type: 6, // USER
+        required: false,
       },
     ],
   },

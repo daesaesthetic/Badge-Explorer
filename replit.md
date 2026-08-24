@@ -14,7 +14,7 @@ A full-stack Discord badge encyclopedia and bot. Users can browse every Discord 
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
 - API: Express 5
-- DB: PostgreSQL + Drizzle ORM (not used — badge data is static)
+- DB: PostgreSQL + Drizzle ORM — static badge definitions remain in TypeScript; Discord collection records use the `user_badges` table
 - Validation: Zod (`zod/v4`), `drizzle-zod`
 - API codegen: Orval (from OpenAPI spec)
 - Build: esbuild (CJS bundle)
@@ -43,7 +43,7 @@ A full-stack Discord badge encyclopedia and bot. Users can browse every Discord 
 - **Badge detail** (`/badge/:id`): full unlock guide, console command code block with copy button, tips
 - **Stats** (`/stats`): charts and counts by category and difficulty
 - **Personal collection** (`/collection`): browser-local badge checklist with progress across currently obtainable badges
-- **Discord bot**: `/badge search`, `/badge info`, `/badge guide`, `/badge console`, `/badge list`, `/badge stats`, `/badge obtainable`, `/badge quickwins`, `/badge rarest`, `/badge legacy`, `/badge random`, `/badge hunt`, `/badge checklist`, `/badge own`, `/badge unown`, `/badge reset`
+- **Discord bot**: `/badge search`, `/badge info`, `/badge guide`, `/badge console`, `/badge list`, `/badge stats`, `/badge obtainable`, `/badge quickwins`, `/badge rarest`, `/badge legacy`, `/badge random`, `/badge hunt`, `/badge checklist`, `/badge own`, `/badge unown`, `/badge reset`, and `/profile [user]`
 
 ## User preferences
 
@@ -54,7 +54,8 @@ _Populate as you build — explicit user instructions worth remembering across s
 - OpenAPI spec: do NOT use `type: integer` — Orval generates `zod.int()` which doesn't exist in Zod v3. Use `type: number` instead.
 - Discord bot registers global slash commands on every startup (safe — it's idempotent, but takes ~1hr to propagate for new registrations)
 - Console commands are intentionally sent as ephemeral (only visible to the requesting user) for safety
-- Browser checklist state is stored in the current browser's localStorage. Bot checklist state is private to the Discord user but resets if the bot process restarts.
+- Browser checklist state is stored in the current browser's localStorage. Bot checklist state is private to the Discord user and stored durably in PostgreSQL, so it survives bot restarts and updates.
+- `/profile [user]` is an ephemeral Discord profile snapshot. It reads the selected user's tracked badges from PostgreSQL and uses the current Discord avatar without persisting profile details.
 - Badge catalog audit (August 24, 2026): reviewed against Discord's Profile Badges 101, Orbs FAQ, and Active Developer support article. The catalog distinguishes available, limited-rollout, retired, and restricted badges; experimental badges must not be presented as generally earnable.
 
 ## Pointers
