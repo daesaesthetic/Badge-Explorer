@@ -76,7 +76,7 @@ export default function Stats() {
               <History className="w-7 h-7" />
             </div>
             <div>
-              <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-1">Legacy</p>
+              <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-1">Retired / Legacy</p>
               <h3 className="text-4xl font-black">{stats.legacy}</h3>
             </div>
           </CardContent>

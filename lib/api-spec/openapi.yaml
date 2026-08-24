@@ -54,7 +54,7 @@ paths:
           in: query
           schema:
             type: string
-          description: Filter by difficulty
+          description: "Filter by difficulty. Use quick for instant and easy badges."
       responses:
         "200":
           description: List of badges
@@ -170,6 +170,9 @@ components:
         obtainable:
           type: boolean
           description: Whether the badge is still obtainable today
+        availability:
+          type: string
+          description: "One of: available, limited, retired, restricted. Limited means Discord has not made the badge broadly available."
         difficulty:
           type: string
           description: "One of: instant, easy, medium, hard, unobtainable"
@@ -208,6 +211,7 @@ components:
           type: number
         legacy:
           type: number
+          description: Count of retired or legacy badges, excluding limited-rollout and restricted badges
         byCategory:
           type: object
           additionalProperties:

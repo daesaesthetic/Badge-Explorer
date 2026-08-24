@@ -11,6 +11,7 @@ import type { BadgeStatsByDifficulty } from './badgeStatsByDifficulty';
 export interface BadgeStats {
   total: number;
   obtainable: number;
+  /** Count of retired or legacy badges, excluding limited-rollout and restricted badges */
   legacy: number;
   byCategory: BadgeStatsByCategory;
   byDifficulty: BadgeStatsByDifficulty;

@@ -55,6 +55,7 @@ _Populate as you build — explicit user instructions worth remembering across s
 - Discord bot registers global slash commands on every startup (safe — it's idempotent, but takes ~1hr to propagate for new registrations)
 - Console commands are intentionally sent as ephemeral (only visible to the requesting user) for safety
 - Browser checklist state is stored in the current browser's localStorage. Bot checklist state is private to the Discord user but resets if the bot process restarts.
+- Badge catalog audit (August 24, 2026): reviewed against Discord's Profile Badges 101, Orbs FAQ, and Active Developer support article. The catalog distinguishes available, limited-rollout, retired, and restricted badges; experimental badges must not be presented as generally earnable.
 
 ## Pointers
 

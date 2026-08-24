@@ -25,7 +25,7 @@ export const ListBadgesQueryParams = zod.object({
   "q": zod.coerce.string().optional().describe('Search query (name or description)'),
   "category": zod.coerce.string().optional().describe('Filter by category'),
   "obtainable": zod.enum(['true', 'false']).optional().describe('Filter by whether the badge is currently obtainable'),
-  "difficulty": zod.coerce.string().optional().describe('Filter by difficulty')
+  "difficulty": zod.coerce.string().optional().describe('Filter by difficulty. Use quick for instant and easy badges.')
 })
 
 export const ListBadgesResponseItem = zod.object({
@@ -35,6 +35,7 @@ export const ListBadgesResponseItem = zod.object({
   "category": zod.string().describe('One of: hypesquad, developer, staff, nitro, booster, special, legacy'),
   "rarity": zod.string().describe('One of: common, uncommon, rare, very_rare, legendary, legacy'),
   "obtainable": zod.boolean().describe('Whether the badge is still obtainable today'),
+  "availability": zod.string().optional().describe('One of: available, limited, retired, restricted. Limited means Discord has not made the badge broadly available.'),
   "difficulty": zod.string().describe('One of: instant, easy, medium, hard, unobtainable'),
   "timeEstimate": zod.string().nullish().describe('Rough time to unlock (e.g. \'2 minutes\', \'~1 month\')'),
   "color": zod.string().describe('Hex color for the badge theme'),
@@ -57,7 +58,7 @@ export const ListBadgesResponse = zod.array(ListBadgesResponseItem)
 export const GetBadgeStatsResponse = zod.object({
   "total": zod.number(),
   "obtainable": zod.number(),
-  "legacy": zod.number(),
+  "legacy": zod.number().describe('Count of retired or legacy badges, excluding limited-rollout and restricted badges'),
   "byCategory": zod.record(zod.string(), zod.number()),
   "byDifficulty": zod.record(zod.string(), zod.number())
 })
@@ -90,6 +91,7 @@ export const GetBadgeResponse = zod.object({
   "category": zod.string().describe('One of: hypesquad, developer, staff, nitro, booster, special, legacy'),
   "rarity": zod.string().describe('One of: common, uncommon, rare, very_rare, legendary, legacy'),
   "obtainable": zod.boolean().describe('Whether the badge is still obtainable today'),
+  "availability": zod.string().optional().describe('One of: available, limited, retired, restricted. Limited means Discord has not made the badge broadly available.'),
   "difficulty": zod.string().describe('One of: instant, easy, medium, hard, unobtainable'),
   "timeEstimate": zod.string().nullish().describe('Rough time to unlock (e.g. \'2 minutes\', \'~1 month\')'),
   "color": zod.string().describe('Hex color for the badge theme'),

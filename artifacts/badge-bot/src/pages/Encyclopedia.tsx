@@ -50,9 +50,9 @@ export default function Encyclopedia() {
       </header>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
-        <Button variant="secondary" className="justify-start gap-3 h-auto py-3" onClick={() => applyQuickFilter({ difficulty: "instant", obtainable: "true" })}>
+        <Button variant="secondary" className="justify-start gap-3 h-auto py-3" onClick={() => applyQuickFilter({ difficulty: "quick", obtainable: "true" })}>
           <Zap className="w-4 h-4 text-[#57F287]" />
-          <span className="text-left"><span className="block font-semibold">Quick wins</span><span className="text-xs text-muted-foreground">Instant unlocks</span></span>
+          <span className="text-left"><span className="block font-semibold">Quick wins</span><span className="text-xs text-muted-foreground">Fast, current targets</span></span>
         </Button>
         <Button variant="secondary" className="justify-start gap-3 h-auto py-3" onClick={() => applyQuickFilter({ obtainable: "true" })}>
           <Sparkles className="w-4 h-4 text-primary" />
@@ -98,6 +98,7 @@ export default function Encyclopedia() {
             className="bg-background/50 md:w-40"
           >
             <option value="">All Difficulties</option>
+            <option value="quick">Quick wins (Instant & Easy)</option>
             <option value="instant">Instant</option>
             <option value="easy">Easy</option>
             <option value="medium">Medium</option>
@@ -145,6 +146,10 @@ export default function Encyclopedia() {
 function BadgeCard({ badge, index, owned }: { badge: BadgeType, index: number, owned: boolean }) {
   const rarityVariant = badge.rarity as "common" | "uncommon" | "rare" | "very_rare" | "legendary" | "legacy";
   const difficultyVariant = badge.difficulty as "instant" | "easy" | "medium" | "hard" | "unobtainable";
+  const availability = badge.availability ?? (badge.obtainable ? "available" : "retired");
+  const isRetired = availability === "retired";
+  const isLimited = availability === "limited";
+  const isRestricted = availability === "restricted";
 
   return (
     <Link 
@@ -152,11 +157,11 @@ function BadgeCard({ badge, index, owned }: { badge: BadgeType, index: number, o
       className="block group"
       style={{ animationDelay: `${index * 50}ms` }}
     >
-      <Card className={`h-full border-border/50 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-primary/50 relative overflow-hidden ${!badge.obtainable ? 'bg-card/40 grayscale-[0.2] opacity-80 hover:opacity-100 hover:grayscale-0' : 'bg-card/80 hover:bg-card'}`}>
-        {!badge.obtainable && (
+      <Card className={`h-full border-border/50 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-primary/50 relative overflow-hidden ${isRetired || isRestricted ? 'bg-card/40 grayscale-[0.2] opacity-80 hover:opacity-100 hover:grayscale-0' : 'bg-card/80 hover:bg-card'}`}>
+        {(isRetired || isRestricted) && (
           <div className="absolute top-0 right-0 w-16 h-16 overflow-hidden z-10 pointer-events-none">
             <div className="absolute top-0 right-0 bg-destructive text-[10px] font-bold py-1 w-[100px] text-center rotate-45 translate-y-3 translate-x-7 shadow-sm text-destructive-foreground tracking-wider uppercase">
-              Legacy
+              {isRestricted ? "Restricted" : "Retired"}
             </div>
           </div>
         )}
@@ -180,6 +185,7 @@ function BadgeCard({ badge, index, owned }: { badge: BadgeType, index: number, o
           
            <div className="flex items-center gap-2 mt-auto pt-5 border-t border-border/50">
              {owned && <Badge variant="outline" className="text-primary border-primary/30 px-2 py-1"><Trophy className="w-3 h-3 mr-1" />Owned</Badge>}
+              {isLimited && <Badge variant="outline" className="border-amber-400/30 bg-amber-400/10 text-amber-300 px-2 py-1">Limited rollout</Badge>}
             <Badge variant={rarityVariant} className="capitalize px-3 py-1 font-bold tracking-wide">
               {badge.rarity.replace('_', ' ')}
             </Badge>

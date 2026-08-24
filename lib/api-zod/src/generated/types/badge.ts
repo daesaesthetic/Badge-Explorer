@@ -17,6 +17,8 @@ export interface Badge {
   rarity: string;
   /** Whether the badge is still obtainable today */
   obtainable: boolean;
+  /** One of: available, limited, retired, restricted. Limited means Discord has not made the badge broadly available. */
+  availability?: string;
   /** One of: instant, easy, medium, hard, unobtainable */
   difficulty: string;
   /**

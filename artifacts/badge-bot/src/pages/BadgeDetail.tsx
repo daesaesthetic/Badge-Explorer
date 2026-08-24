@@ -58,6 +58,13 @@ export default function BadgeDetail() {
 
   const rarityVariant = badge.rarity as "common" | "uncommon" | "rare" | "very_rare" | "legendary" | "legacy";
   const difficultyVariant = badge.difficulty as "instant" | "easy" | "medium" | "hard" | "unobtainable";
+  const availability = badge.availability ?? (badge.obtainable ? "available" : "retired");
+  const availabilityLabel: Record<string, string> = {
+    available: "Currently obtainable",
+    limited: "Limited rollout",
+    retired: "Retired",
+    restricted: "Restricted",
+  };
 
   return (
     <div className="p-6 md:p-10 max-w-4xl mx-auto animate-in fade-in duration-300">
@@ -77,8 +84,8 @@ export default function BadgeDetail() {
         <div className="flex-1">
           <div className="flex flex-wrap items-center gap-3 mb-3">
             <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">{badge.name}</h1>
-            {!badge.obtainable && (
-              <Badge variant="legacy" className="text-sm px-3 py-1 uppercase tracking-widest">Legacy</Badge>
+            {availability !== "available" && (
+              <Badge variant={availability === "limited" ? "outline" : "legacy"} className="text-sm px-3 py-1 uppercase tracking-widest">{availabilityLabel[availability]}</Badge>
             )}
           </div>
           
@@ -152,7 +159,7 @@ export default function BadgeDetail() {
                   <div className="text-sm">
                     <p className="font-bold text-destructive mb-1">Developer Console Warning</p>
                     <p className="text-destructive/80 leading-relaxed">
-                       Only use this for the official Discord web client and only on your own account. The Discord console has full access to your account. This cannot grant discontinued, staff-only, or legacy badges.
+                        Only use this for the official Discord web client and only on your own account. The Discord console has full access to your account. Scripts cannot grant staff-only or server-validated badges and are never a guaranteed way to earn retired badges.
                     </p>
                   </div>
                 </div>
@@ -210,7 +217,7 @@ export default function BadgeDetail() {
                 </div>
                 <div className="flex justify-between items-center border-b border-border/50 pb-2">
                   <dt className="text-muted-foreground">Status</dt>
-                  <dd className="font-medium text-foreground">{badge.obtainable ? "Currently Obtainable" : "Legacy (Unobtainable)"}</dd>
+                  <dd className="font-medium text-foreground">{availabilityLabel[availability] ?? availability}</dd>
                 </div>
                 <div className="flex justify-between items-center border-b border-border/50 pb-2">
                   <dt className="text-muted-foreground">Category</dt>

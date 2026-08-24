@@ -38,12 +38,31 @@ const CATEGORY_LABEL: Record<string, string> = {
   legacy: "Legacy",
 };
 
+function getAvailability(badge: Badge) {
+  return badge.availability ?? (badge.obtainable ? "available" : "retired");
+}
+
+const AVAILABILITY_LABEL: Record<string, string> = {
+  available: "✅ Obtainable",
+  limited: "⚠️ Limited rollout",
+  retired: "🚫 Retired",
+  restricted: "🔒 Restricted",
+};
+
+const AVAILABILITY_ICON: Record<string, string> = {
+  available: "✅",
+  limited: "⚠️",
+  retired: "🚫",
+  restricted: "🔒",
+};
+
 export function buildBadgeEmbed(badgeId: string) {
   const badge = BADGES.find((b) => b.id === badgeId);
   if (!badge) return null;
 
   const difficultyStr = `${DIFFICULTY_EMOJI[badge.difficulty] ?? "?"} ${badge.difficulty.charAt(0).toUpperCase() + badge.difficulty.slice(1)}`;
-  const obtainableStr = badge.obtainable ? "✅ Obtainable" : "🚫 No longer obtainable";
+  const availability = getAvailability(badge);
+  const obtainableStr = AVAILABILITY_LABEL[availability] ?? availability;
   const rarityStr = RARITY_LABEL[badge.rarity] ?? badge.rarity;
   const categoryStr = CATEGORY_LABEL[badge.category] ?? badge.category;
 
@@ -94,7 +113,7 @@ export function buildBadgeListEmbed(
   description?: string,
 ) {
   const lines = badges.map((b) => {
-    const status = b.obtainable ? "✅" : "🚫";
+    const status = AVAILABILITY_ICON[getAvailability(b)] ?? "•";
     const diff = DIFFICULTY_EMOJI[b.difficulty] ?? "?";
     const cat = CATEGORY_LABEL[b.category] ?? b.category;
     return `${status} ${diff} **${b.name}** — ${cat} | \`/badge info ${b.id}\``;
@@ -119,7 +138,7 @@ export function buildBadgeListEmbed(
     description: (description ? description + "\n\n" : "") + (chunks[0]?.join("\n") ?? "No badges found."),
     color: 0x5865f2,
     footer: {
-      text: `${badges.length} badge${badges.length !== 1 ? "s" : ""} | ✅ obtainable  🚫 legacy  ⚡easy  🔶medium  🔴hard`,
+      text: `${badges.length} badge${badges.length !== 1 ? "s" : ""} | ✅ obtainable  ⚠️ limited  🚫 retired  🔒 restricted`,
     },
   };
 }
@@ -147,7 +166,8 @@ export function buildConsoleEmbed(badgeId: string) {
 export function buildStatsEmbed() {
   const total = BADGES.length;
   const obtainable = BADGES.filter((b) => b.obtainable).length;
-  const legacy = BADGES.filter((b) => !b.obtainable).length;
+  const retired = BADGES.filter((b) => getAvailability(b) === "retired").length;
+  const limited = BADGES.filter((b) => getAvailability(b) === "limited").length;
 
   const byCategory: Record<string, number> = {};
   const byDifficulty: Record<string, number> = {};
@@ -170,7 +190,8 @@ export function buildStatsEmbed() {
     fields: [
       { name: "Total Badges", value: `**${total}**`, inline: true },
       { name: "Obtainable Now", value: `**${obtainable}**`, inline: true },
-      { name: "Legacy (No Longer Obtainable)", value: `**${legacy}**`, inline: true },
+      { name: "Retired", value: `**${retired}**`, inline: true },
+      { name: "Limited Rollout", value: `**${limited}**`, inline: true },
       { name: "By Category", value: catLines, inline: true },
       { name: "By Difficulty", value: diffLines, inline: true },
     ],
@@ -195,6 +216,7 @@ export function buildChecklistEmbed(ownedIds: string[]) {
   const percent = obtainable.length
     ? Math.round((ownedObtainable.length / obtainable.length) * 100)
     : 0;
+  const retired = BADGES.filter((badge) => getAvailability(badge) === "retired").length;
 
   const progressBar = Array.from({ length: 10 }, (_, index) =>
     index < Math.round(percent / 10) ? "▰" : "▱",
@@ -210,7 +232,7 @@ export function buildChecklistEmbed(ownedIds: string[]) {
 
   return {
     title: "Your Badge Checklist",
-    description: `${progressBar} **${percent}%** of obtainable badges tracked\\n\\n**${ownedObtainable.length}** obtained · **${remaining.length}** remaining · **${BADGES.length - obtainable.length}** legacy`,
+    description: `${progressBar} **${percent}%** of obtainable badges tracked\\n\\n**${ownedObtainable.length}** obtained · **${remaining.length}** remaining · **${retired}** retired`,
     color: 0x5865f2,
     fields: [
       {

@@ -26,6 +26,8 @@ export interface Badge {
   rarity: string;
   /** Whether the badge is still obtainable today */
   obtainable: boolean;
+  /** One of: available, limited, retired, restricted. Limited means Discord has not made the badge broadly available. */
+  availability?: string;
   /** One of: instant, easy, medium, hard, unobtainable */
   difficulty: string;
   /**
@@ -60,6 +62,7 @@ export type BadgeStatsByDifficulty = {[key: string]: number};
 export interface BadgeStats {
   total: number;
   obtainable: number;
+  /** Count of retired or legacy badges, excluding limited-rollout and restricted badges */
   legacy: number;
   byCategory: BadgeStatsByCategory;
   byDifficulty: BadgeStatsByDifficulty;
@@ -89,7 +92,7 @@ category?: string;
  */
 obtainable?: ListBadgesObtainable;
 /**
- * Filter by difficulty
+ * Filter by difficulty. Use quick for instant and easy badges.
  */
 difficulty?: string;
 };

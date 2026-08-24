@@ -21,7 +21,7 @@ category?: string;
  */
 obtainable?: ListBadgesObtainable;
 /**
- * Filter by difficulty
+ * Filter by difficulty. Use quick for instant and easy badges.
  */
 difficulty?: string;
 };
