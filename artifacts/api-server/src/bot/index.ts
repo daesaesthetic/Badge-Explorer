@@ -11,9 +11,24 @@ import {
   buildBadgeListEmbed,
   buildConsoleEmbed,
   buildStatsEmbed,
+  buildChecklistEmbed,
+  buildHuntPlanEmbed,
+  buildRandomBadgeEmbed,
+  getRarestBadges,
   SLASH_COMMANDS,
 } from "./commands";
-import { searchBadges } from "../data/badges";
+import { BADGES, searchBadges, getBadgeById } from "../data/badges";
+
+const ownedBadgesByUser = new Map<string, Set<string>>();
+
+function getOwnedBadges(userId: string): Set<string> {
+  let owned = ownedBadgesByUser.get(userId);
+  if (!owned) {
+    owned = new Set<string>();
+    ownedBadgesByUser.set(userId, owned);
+  }
+  return owned;
+}
 
 export async function registerCommands(): Promise<void> {
   const token = process.env.DISCORD_BOT_TOKEN;
@@ -48,7 +63,7 @@ export function startBot(): void {
     intents: [GatewayIntentBits.Guilds],
   });
 
-  client.once("ready", () => {
+  client.once("clientReady", () => {
     logger.info({ tag: client.user?.tag }, "Discord bot logged in");
   });
 
@@ -65,6 +80,106 @@ export function startBot(): void {
       if (sub === "stats") {
         const embed = buildStatsEmbed();
         await interaction.reply({ embeds: [embed] });
+        return;
+      }
+
+      if (sub === "obtainable") {
+        const results = searchBadges({ obtainable: "true" });
+        const embed = buildBadgeListEmbed(
+          results,
+          "Obtainable Badges",
+          "Every badge in the current catalog that Discord still allows users to earn.",
+        );
+        await interaction.reply({ embeds: [embed] });
+        return;
+      }
+
+      if (sub === "quickwins") {
+        const results = searchBadges({ obtainable: "true" }).filter(
+          (badge) => badge.difficulty === "instant" || badge.difficulty === "easy",
+        );
+        const embed = buildBadgeListEmbed(
+          results,
+          "Quick Wins",
+          "Start here if you want the most progress with the least time.",
+        );
+        await interaction.reply({ embeds: [embed] });
+        return;
+      }
+
+      if (sub === "rarest") {
+        const embed = buildBadgeListEmbed(
+          getRarestBadges(),
+          "Rarest Badges",
+          "The hardest-to-find badges in the catalog, including legacy badges.",
+        );
+        await interaction.reply({ embeds: [embed] });
+        return;
+      }
+
+      if (sub === "legacy") {
+        const embed = buildBadgeListEmbed(
+          searchBadges({ obtainable: "false" }),
+          "Legacy Badges",
+          "These badges are kept for collection tracking, but Discord no longer awards them.",
+        );
+        await interaction.reply({ embeds: [embed] });
+        return;
+      }
+
+      if (sub === "random") {
+        const obtainable = searchBadges({ obtainable: "true" });
+        const badge = obtainable[Math.floor(Math.random() * obtainable.length)];
+        if (!badge) {
+          await interaction.reply({ content: "No obtainable badge targets are available right now.", ephemeral: true });
+          return;
+        }
+        await interaction.reply({ embeds: [buildRandomBadgeEmbed(badge)] });
+        return;
+      }
+
+      if (sub === "hunt") {
+        await interaction.reply({ embeds: [buildHuntPlanEmbed()], ephemeral: true });
+        return;
+      }
+
+      if (sub === "checklist") {
+        const owned = [...getOwnedBadges(interaction.user.id)];
+        await interaction.reply({ embeds: [buildChecklistEmbed(owned)], ephemeral: true });
+        return;
+      }
+
+      if (sub === "own" || sub === "unown") {
+        const id = interaction.options.getString("id", true);
+        const badge = getBadgeById(id);
+        if (!badge) {
+          await interaction.reply({ content: `Badge \`${id}\` not found.`, ephemeral: true });
+          return;
+        }
+
+        const owned = getOwnedBadges(interaction.user.id);
+        if (sub === "own") {
+          owned.add(id);
+          await interaction.reply({
+            content: `Marked **${badge.name}** as obtained. Use \`/badge checklist\` to see your progress.`,
+            ephemeral: true,
+          });
+        } else {
+          owned.delete(id);
+          await interaction.reply({
+            content: `Removed **${badge.name}** from your checklist.`,
+            ephemeral: true,
+          });
+        }
+        return;
+      }
+
+      if (sub === "reset") {
+        ownedBadgesByUser.delete(interaction.user.id);
+        await interaction.reply({
+          content: "Your private badge checklist has been cleared.",
+          ephemeral: true,
+        });
         return;
       }
 

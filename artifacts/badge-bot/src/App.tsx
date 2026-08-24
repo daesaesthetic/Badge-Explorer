@@ -7,6 +7,7 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import Encyclopedia from '@/pages/Encyclopedia';
 import BadgeDetail from '@/pages/BadgeDetail';
 import Stats from '@/pages/Stats';
+import Collection from '@/pages/Collection';
 
 const queryClient = new QueryClient();
 
@@ -17,6 +18,7 @@ function Router() {
         <Route path="/" component={Encyclopedia} />
         <Route path="/badge/:id" component={BadgeDetail} />
         <Route path="/stats" component={Stats} />
+        <Route path="/collection" component={Collection} />
         <Route component={NotFound} />
       </Switch>
     </AppLayout>

@@ -42,7 +42,8 @@ A full-stack Discord badge encyclopedia and bot. Users can browse every Discord 
 - **Web dashboard** (`/`): searchable/filterable badge grid with rarity indicators, difficulty chips, obtainable status
 - **Badge detail** (`/badge/:id`): full unlock guide, console command code block with copy button, tips
 - **Stats** (`/stats`): charts and counts by category and difficulty
-- **Discord bot**: `/badge search`, `/badge info`, `/badge guide`, `/badge console`, `/badge list`, `/badge stats`
+- **Personal collection** (`/collection`): browser-local badge checklist with progress across currently obtainable badges
+- **Discord bot**: `/badge search`, `/badge info`, `/badge guide`, `/badge console`, `/badge list`, `/badge stats`, `/badge obtainable`, `/badge quickwins`, `/badge rarest`, `/badge legacy`, `/badge random`, `/badge hunt`, `/badge checklist`, `/badge own`, `/badge unown`, `/badge reset`
 
 ## User preferences
 
@@ -53,6 +54,7 @@ _Populate as you build — explicit user instructions worth remembering across s
 - OpenAPI spec: do NOT use `type: integer` — Orval generates `zod.int()` which doesn't exist in Zod v3. Use `type: number` instead.
 - Discord bot registers global slash commands on every startup (safe — it's idempotent, but takes ~1hr to propagate for new registrations)
 - Console commands are intentionally sent as ephemeral (only visible to the requesting user) for safety
+- Browser checklist state is stored in the current browser's localStorage. Bot checklist state is private to the Discord user but resets if the bot process restarts.
 
 ## Pointers
 

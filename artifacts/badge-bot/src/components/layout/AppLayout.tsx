@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter"
-import { Shield, LayoutGrid, BarChart2, Terminal } from "lucide-react"
+import { Shield, LayoutGrid, BarChart2, Terminal, Trophy } from "lucide-react"
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
@@ -7,6 +7,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const navItems = [
     { href: "/", label: "Encyclopedia", icon: LayoutGrid },
     { href: "/stats", label: "Statistics", icon: BarChart2 },
+    { href: "/collection", label: "My Collection", icon: Trophy },
   ];
 
   return (

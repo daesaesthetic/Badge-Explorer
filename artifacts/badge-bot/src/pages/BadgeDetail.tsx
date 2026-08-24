@@ -1,12 +1,13 @@
 import { useRoute, Link } from "wouter"
 import { useGetBadge, getGetBadgeQueryKey } from "@workspace/api-client-react"
-import { ArrowLeft, Clock, Terminal, AlertTriangle, Copy, Check, ExternalLink, ShieldAlert, Award } from "lucide-react"
+import { ArrowLeft, Clock, Terminal, AlertTriangle, Copy, Check, ExternalLink, ShieldAlert, Award, Trophy } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Card, CardContent } from "@/components/ui/card"
 import { toast } from "sonner"
 import { useState } from "react"
+import { useCollection } from "@/hooks/use-collection"
 
 export default function BadgeDetail() {
   const [, params] = useRoute("/badge/:id")
@@ -16,6 +17,7 @@ export default function BadgeDetail() {
   })
   
   const [copied, setCopied] = useState(false)
+  const { isOwned, toggleOwned } = useCollection()
 
   const copyToClipboard = () => {
     if (!badge?.consoleCommand) return;
@@ -84,7 +86,7 @@ export default function BadgeDetail() {
             {badge.description}
           </p>
 
-          <div className="flex flex-wrap items-center gap-3">
+           <div className="flex flex-wrap items-center gap-3">
             <Badge variant="outline" className="capitalize text-sm py-1.5 px-4 bg-card/50 border-border/50">
               <Award className="w-3.5 h-3.5 mr-2 opacity-70" />
               {badge.category.replace('_', ' ')}
@@ -101,6 +103,10 @@ export default function BadgeDetail() {
                 {badge.timeEstimate}
               </Badge>
             )}
+            <Button variant={isOwned(badge.id) ? "secondary" : "outline"} className="gap-2" onClick={() => toggleOwned(badge.id)}>
+              <Trophy className="w-4 h-4" />
+              {isOwned(badge.id) ? "Marked obtained" : "Mark as obtained"}
+            </Button>
           </div>
         </div>
       </div>
@@ -146,8 +152,7 @@ export default function BadgeDetail() {
                   <div className="text-sm">
                     <p className="font-bold text-destructive mb-1">Developer Console Warning</p>
                     <p className="text-destructive/80 leading-relaxed">
-                      Only paste code you understand. The Discord console has full access to your account. 
-                      This snippet is provided for educational purposes.
+                       Only use this for the official Discord web client and only on your own account. The Discord console has full access to your account. This cannot grant discontinued, staff-only, or legacy badges.
                     </p>
                   </div>
                 </div>

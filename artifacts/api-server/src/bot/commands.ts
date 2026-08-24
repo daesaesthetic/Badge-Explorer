@@ -1,4 +1,4 @@
-import { BADGES, searchBadges, getCategories } from "../data/badges";
+import { BADGES, searchBadges, getCategories, type Badge } from "../data/badges";
 
 // ─── Shared embed helpers ────────────────────────────────────────────────────
 
@@ -178,6 +178,120 @@ export function buildStatsEmbed() {
   };
 }
 
+const RARITY_WEIGHT: Record<string, number> = {
+  legendary: 6,
+  very_rare: 5,
+  rare: 4,
+  uncommon: 3,
+  common: 2,
+  legacy: 1,
+};
+
+export function buildChecklistEmbed(ownedIds: string[]) {
+  const owned = new Set(ownedIds);
+  const obtainable = BADGES.filter((badge) => badge.obtainable);
+  const ownedObtainable = obtainable.filter((badge) => owned.has(badge.id));
+  const remaining = obtainable.filter((badge) => !owned.has(badge.id));
+  const percent = obtainable.length
+    ? Math.round((ownedObtainable.length / obtainable.length) * 100)
+    : 0;
+
+  const progressBar = Array.from({ length: 10 }, (_, index) =>
+    index < Math.round(percent / 10) ? "▰" : "▱",
+  ).join("");
+
+  const nextBadges = remaining
+    .slice()
+    .sort((a, b) => {
+      const difficultyOrder = ["instant", "easy", "medium", "hard", "unobtainable"];
+      return difficultyOrder.indexOf(a.difficulty) - difficultyOrder.indexOf(b.difficulty);
+    })
+    .slice(0, 8);
+
+  return {
+    title: "Your Badge Checklist",
+    description: `${progressBar} **${percent}%** of obtainable badges tracked\\n\\n**${ownedObtainable.length}** obtained · **${remaining.length}** remaining · **${BADGES.length - obtainable.length}** legacy`,
+    color: 0x5865f2,
+    fields: [
+      {
+        name: "Next easiest targets",
+        value: nextBadges.length
+          ? nextBadges
+              .map((badge) => `${DIFFICULTY_EMOJI[badge.difficulty] ?? "•"} **${badge.name}** — \`/badge info ${badge.id}\``)
+              .join("\n")
+          : "You have marked every obtainable badge. Check back when Discord adds more.",
+        inline: false,
+      },
+      {
+        name: "How to update it",
+        value: "Use `/badge own` after earning a badge, `/badge unown` to undo, or `/badge reset` to clear your checklist.",
+        inline: false,
+      },
+    ],
+    footer: { text: "Only your Discord user ID is used as the in-memory checklist key" },
+  };
+}
+
+export function buildHuntPlanEmbed() {
+  const quickWins = searchBadges({ obtainable: "true" }).filter(
+    (badge) => badge.difficulty === "instant" || badge.difficulty === "easy",
+  );
+  const needsWork = searchBadges({ obtainable: "true" }).filter(
+    (badge) => badge.difficulty === "medium" || badge.difficulty === "hard",
+  );
+
+  return {
+    title: "Badge Hunting Plan",
+    description: "Start with the badges that take minutes, then work toward the ones that need consistency or staff review.",
+    color: 0x57f287,
+    fields: [
+      {
+        name: "Phase 1 · Quick wins",
+        value: quickWins
+          .map((badge) => `**${badge.name}** · ${badge.timeEstimate ?? "short"} · \`/badge info ${badge.id}\``)
+          .join("\n")
+          .slice(0, 1024),
+        inline: false,
+      },
+      {
+        name: "Phase 2 · Long game",
+        value: needsWork
+          .map((badge) => `**${badge.name}** · ${badge.timeEstimate ?? "varies"} · \`/badge info ${badge.id}\``)
+          .join("\n")
+          .slice(0, 1024),
+        inline: false,
+      },
+      {
+        name: "Safety rule",
+        value: "Only use commands for actions Discord officially supports on your own account. No script can legitimately grant staff, legacy, or discontinued badges.",
+        inline: false,
+      },
+    ],
+    footer: { text: "Plan made from the current BadgeBot catalog" },
+  };
+}
+
+export function buildRandomBadgeEmbed(badge: Badge) {
+  const difficulty = badge.difficulty.charAt(0).toUpperCase() + badge.difficulty.slice(1);
+  return {
+    title: "Your next badge target",
+    description: `**${badge.name}**\n${badge.description}`,
+    color: RARITY_COLORS[badge.rarity] ?? 0x5865f2,
+    fields: [
+      { name: "Difficulty", value: difficulty, inline: true },
+      { name: "Time estimate", value: badge.timeEstimate ?? "Varies", inline: true },
+      { name: "Start here", value: `Use \`/badge info ${badge.id}\` for the full guide.`, inline: false },
+    ],
+    footer: { text: badge.obtainable ? "This badge is currently obtainable" : "This badge is legacy — use it as a collection target only" },
+  };
+}
+
+export function getRarestBadges() {
+  return BADGES.slice()
+    .sort((a, b) => (RARITY_WEIGHT[b.rarity] ?? 0) - (RARITY_WEIGHT[a.rarity] ?? 0))
+    .slice(0, 8);
+}
+
 export const SLASH_COMMANDS = [
   {
     name: "badge",
@@ -257,6 +371,74 @@ export const SLASH_COMMANDS = [
       {
         name: "stats",
         description: "Show statistics about all Discord badges",
+        type: 1,
+      },
+      {
+        name: "obtainable",
+        description: "Show every badge you can still earn today",
+        type: 1,
+      },
+      {
+        name: "quickwins",
+        description: "Show the fastest badges to add to your collection",
+        type: 1,
+      },
+      {
+        name: "rarest",
+        description: "Show the rarest badges in the catalog",
+        type: 1,
+      },
+      {
+        name: "legacy",
+        description: "Show badges that are no longer obtainable",
+        type: 1,
+      },
+      {
+        name: "random",
+        description: "Get a random badge target",
+        type: 1,
+      },
+      {
+        name: "hunt",
+        description: "Get a practical badge hunting plan",
+        type: 1,
+      },
+      {
+        name: "checklist",
+        description: "View your private badge collection checklist",
+        type: 1,
+      },
+      {
+        name: "own",
+        description: "Mark a badge as obtained in your private checklist",
+        type: 1,
+        options: [
+          {
+            name: "id",
+            description: "Badge to mark as obtained",
+            type: 3,
+            required: true,
+            choices: BADGES.map((b) => ({ name: b.name, value: b.id })),
+          },
+        ],
+      },
+      {
+        name: "unown",
+        description: "Remove a badge from your private checklist",
+        type: 1,
+        options: [
+          {
+            name: "id",
+            description: "Badge to remove",
+            type: 3,
+            required: true,
+            choices: BADGES.map((b) => ({ name: b.name, value: b.id })),
+          },
+        ],
+      },
+      {
+        name: "reset",
+        description: "Clear every badge from your private checklist",
         type: 1,
       },
       {
